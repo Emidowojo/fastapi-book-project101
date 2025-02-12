@@ -1,0 +1,32 @@
+name: Deploy to Server Host
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Set up SSH
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SERVER_SSH_KEY }}" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+
+    - name: EC2 Deploy
+      run: |
+        ssh -i ~/.ssh/id_rsa ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+          cd /home/ubuntu/fastapi-book-project
+          git pull origin main
+          docker stop $(docker ps -q)
+          docker build -t fastapi-app . && docker run -d -p 8000:8000 fastapi-app
+          sudo systemctl restart nginx.service
+        EOF
+ 
