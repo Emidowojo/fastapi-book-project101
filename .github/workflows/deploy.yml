@@ -22,17 +22,16 @@ jobs:
         chmod 600 ~/.ssh/deploy_key
         eval $(ssh-agent -s)
         ssh-add ~/.ssh/deploy_key
-        ssh-keyscan -H ${{ secrets.SERVER_HOST }} >> ~/.ssh/known_hosts
+        ssh-keyscan -H ${{ vars.SERVER_HOST }} >> ~/.ssh/known_hosts
 
     - name: EC2 Deploy
       env:
         SSH_AUTH_SOCK: /tmp/ssh_agent.sock
       run: |
-        ssh -o StrictHostKeyChecking=no ${{ secrets.SERVER_USER }}@${{ secrets.SERVER_HOST }} << 'EOF'
+        ssh -o StrictHostKeyChecking=no ubuntu@${{ vars.SERVER_HOST }} << 'EOF'
           cd /home/ubuntu/fastapi-book-project
           git pull origin main
           docker stop $(docker ps -q) || true
           docker build -t fastapi-app . && docker run -d -p 8000:8000 fastapi-app
           sudo systemctl restart nginx.service
         EOF
-        
