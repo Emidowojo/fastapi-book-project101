@@ -28,10 +28,10 @@ jobs:
       env:
         SSH_AUTH_SOCK: /tmp/ssh_agent.sock
       run: |
-        ssh -o StrictHostKeyChecking=no ubuntu@${{ vars.SERVER_HOST }} << 'EOF'
+        ssh -i ~/.ssh/deploy_key ubuntu@${{ vars.SERVER_HOST }} << 'EOF'
           cd /home/ubuntu/fastapi-book-project
           git pull origin main
-          docker stop $(docker ps -q) || true
+          docker stop $(docker ps -q)
           docker build -t fastapi-app . && docker run -d -p 8000:8000 fastapi-app
           sudo systemctl restart nginx.service
         EOF
